@@ -32,7 +32,7 @@ public class AuctionsController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<AuctionDto>> GetAuctionByid(Guid id)
+    public async Task<ActionResult<AuctionDto>> GetAuctionById(Guid id)
     {
         var auction = await _context.Auctions
         .Include(x => x.Item)
@@ -41,5 +41,20 @@ public class AuctionsController : ControllerBase
         if (auction == null) return NotFound();
 
         return _mapper.Map<AuctionDto>(auction);
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<AuctionDto>> CreateAuction(CreateAuctionDto auctionDto)
+    {
+        var auction = _mapper.Map<Auction>(auctionDto);
+        //TODO: add current user as seller
+        auction.Seller = "test";
+        _context.Auctions.Add(auction);
+
+        var result = await _context.SaveChangesAsync() > 0;
+
+        if (!result) return BadRequest("Could not save changes to the DB");
+
+        return CreatedAtAction(nameof(GetAuctionById), new { auction.Id }, _mapper.Map<AuctionDto>(auction));
     }
 }
